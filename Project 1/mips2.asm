@@ -1,7 +1,7 @@
  .data
 	prmpt1:		.asciiz "How many inputs"
 	prmptQ1: 	.asciiz "Enter the String: "
-	menuText: 	.asciiz "\nWelcome to our MIPS project!\nMain Menu:\n1. Count Alphabetic Characters\n2. Sort Numbers\n3. Prime (N)\n4. Huffman Coding\n5. Exit\n"
+	meenuText: 	.asciiz "\nWelcome to our MIPS project!\nMain Menu:\n1. Count Alphabetic Characters\n2. Sort Numbers\n3. Prime (N)\n4. Huffman Coding\n5. Exit\n"
 	deneme: 	.asciiz "\nhello, "
 	# string: 	.space 100
 	userInput: 	.space 20
@@ -10,7 +10,7 @@
 	bufferSmaller: .space 100
 	spaceChar: 	.asciiz " "
 	newLine: 	.asciiz "\n"
-	#nullChar: 	.asciiz NULL
+	nullChar: 	.byte   '\0'
 	int_array:  .word   0:26
 	myArray: 	.space 104	# array of size 26*4
 
@@ -56,13 +56,17 @@ question1:
 	# syscall
 
 	jal convert		# make all letters lowercase
-
+    li $t0, 0
+	j loopBasil
+    
 	la 		$t0, bufferSmaller
-	la 		$t7, newLine
+	la 		$t7, nullChar
 	lb 		$t7, 0($t7)
 	li		$t1, 97
 	la		$t3, int_array
 	
+    #call call fillZeros
+
 	jal loop1
 	
 
@@ -72,13 +76,44 @@ question1:
 
    	j menu
 	
+
+loopBasil:
+	beq $t0, 104, loop1end  # checks if index is at the end of the loop
+
+	lw $t2, int_array($t0)  # puts the array value at index $t0 to $t2
+	li $v0, 1
+	move $a0, $t2
+	syscall  # prints the value 
+
+	li $v0, 4
+	la $a0, newLine
+	syscall  # prints newLine
+	
+	addi $t0, $t0, 4  # increments the index
+
+
 loop1:
-	# la 		$t0, bufferSmaller  
+	# la 		$t0, bufferSmaller 
 	lb		$t2, 0($t0)
 	beq		$t2, $t7, loop1end
+    
+
 	
 	li 		$v0, 11
 	la 		$a0, ($t2)
+	syscall
+
+	sub		$t4, $t2, $t1
+	mul		$t5, $t4, 4
+	add		$t6, $t5, $t3
+
+	lw		$t8, ($t6)
+
+	addi	$t8, $t8, 1
+	sw		$t8, ($t6)
+		
+	li 		$v0, 1
+	la 		$a0, ($t6)
 	syscall
 	
 	#li		$t4, 4
@@ -93,11 +128,10 @@ loop1:
 	j loop1
 
 loop1end:
-	li 		$v0, 4
-	la 		$a0, int_array
-	syscall
 
-	jr 		$ra		# go back to caller
+	#jr 		$ra		# go back to caller
+	li $v0, 10
+	syscall 
 
 question2:
    	j exit
@@ -151,10 +185,10 @@ convertLoop:
 	j 		convertLoop
 
 convertEnd:
-	# li 		$v0, 4
-	# la 		$a0, bufferSmaller
-	# syscall
+	#li 		$v0, 4
+	#la 		$a0, bufferSmaller
+	#syscall
 
 	jr 		$ra		# go back to caller
 	
-	   
+	
