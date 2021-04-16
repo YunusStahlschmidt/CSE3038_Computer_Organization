@@ -161,8 +161,10 @@ question2:
 	syscall
 	
 	li 		$t3, 0  	# index for buffer
-	la		$t5, newLine 
+	la		$t5, nullChar 
 	la 		$t6, spaceChar
+	lb		$t5, 0($t5)
+	lb		$t6, 0($t6)
 	li		$s0, 0		# flag for end of input string
 	li		$s1, 0		# flag for '-'
 	li		$s2, 0		# for calculations
@@ -171,10 +173,12 @@ question2:
 	li 		$t8, 0		# counter for intAsStr position
 	jal 	loopForQ2Input
 	
+continueQ2:
 
-	li		$v0, 4 		# print a string
-	la		$a0, int_array($zero)	# setting string
+	li		$v0, 4		# print a string
+	la		$a0, deneme	# setting string
 	syscall
+
 
 
 	li 		$t4, 0
@@ -185,7 +189,13 @@ question2:
 
 loopForQ2Input:
 	lb 		$t4, buffer($t3)			# load char of input
+
+	li		$v0, 11 		# print a string
+	la		$a0, ($st4)	# setting string
+	syscall
+
 	beq 	$t4, $t5, setStrEndFlag		# if newline end loop
+	beq 	$t4, 45, setNegFlag  # if the char is negative (-) set flag
 continueQ2InputLoop:
 	li 		$t9, 0					# counter for intAsString
 	beq 	$t4, $t6, calcIntVal 	# if space then calc int val
@@ -198,28 +208,35 @@ continueQ2InputLoop:
 
 calcIntVal:
 	# calculate integer value and store to int array
-	# if flag = 1 => jr $ra 
-	beq		$t8, 0,	endCalcIntVal
+	# if flag = 1 => jr $ra  
+	beq		$t8, 0,	endCalcIntVal  #-123
 	lb		$t4, intAsStr($t9)
-	beq 	$t4, 34, setNegFlag  # if the char is negative (-) set flag
+	#beq 	$t4, 34, setNegFlag  # if the char is negative (-) set flag
 	
-	sub 	$t4, $t4, 48	# to get decimal value of int in str form
-	lw		$t0, 0($t8)		# counter for mult by 10
-	addi 	$t0, $t0, -1	# decrease by 1 becasue we look from the backside
+	# sub 	$t4, $t4, 48	# to get decimal value of int in str form
+	addi 	$t4, $t4, -48
+	li		$t0, 0
+	addi	$t0, $t8, 0		# counter for mult by 10
+	addi 	$t0, $t0, -1	# mult by 10^n (n = $t8 -1)
 	bne		$t0, $zero,	loopMult10	# if more than 1 digit mult by 10 n amount of times
 continueCalcIntVal:
 	addi	$s2, $t4, 0		# add result to calculations register
+	
+	sb		$t5, intAsStr($t9)
 	addi	$t9, $t9, 1		# increment substring counter
 	addi	$t8, $t8, -1
+
 	j 		calcIntVal
 	
 endCalcIntVal:
+
 	beq		$s1, 1, makeNegative  	# if negFlag = True adjust result
 	sw		$s2, int_array($s4)		# store result in int array
-	addi 	$s4, $s4, 1				# increment int array position counter
-	beq		$s0, 1, loopEnd			# if at end go back to main func
+	addi 	$s4, $s4, 4				# increment int array position counter
+	#beq		$s0, 1, loopEnd			# if at end go back to main func
+	beq		$s0, 1, continueQ2
 	j 		loopForQ2Input
-
+	
 loopMult10:
 	beq		$t0, $zero, continueCalcIntVal	# check if n is reached
 	mul 	$t4, $t4, $s3	# mult $t4 by 10
@@ -232,14 +249,16 @@ makeNegative:
 	j		endCalcIntVal
 
 setStrEndFlag:
+
 	li 		$s0, 1
 	j 		continueQ2InputLoop
 
 setNegFlag:
+
 	li		$s1, 1
-	addi	$t9, $t9, 1
-	# j		continueCalcIntVal
-	j 		calcIntVal
+	# addi	$t9, $t9, 1
+	addi	$t3, $t3, 1		# increment main loop counter
+	j 		loopForQ2Input
 
 outerLoopForQ2:
 	# make sure t4 is 0 at first !
@@ -270,7 +289,7 @@ continueLoopForQ2:
 
 swap:
 	lw      $t3, int_array($t2) # temp register
-	sw      $t1, int_array($t2) # adding t1 to t2
+	sw      $t1, int_array($t2) # replacing t2 with t1
 	sw      $t3, int_array($t1) # storing temp to t1s memory 
 
 	j continueLoopForQ2

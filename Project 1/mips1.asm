@@ -14,6 +14,7 @@
 	buffer: 	.space 100
 	bufferSmaller: .space 100
 	spaceChar: 	.asciiz " "
+	minusChar: 	.asciiz "-"
 	newLine: 	.asciiz "\n"
 	nullChar: 	.byte '\0'
 	int_array:  .word   0:26
@@ -154,96 +155,127 @@ question2:
    	li		$v0, 4 		# print a string
 	la		$a0, prmptInput	# setting string
 	syscall
-
-	li 		$v0, 8		# read input
-	la		$a0, buffer	# buffer stores input string
+	
+	li 		$v0, 8
+	la		$a0, buffer
 	li		$a1, 100
 	syscall
+
+	li		$t0, 0
+	li		$t2, 0			# sub string counter
+	li		$s1, 0			# result register
+	li		$s2, 0			# minus flag
+	li		$s3, 0
+	li		$s4, 0			# end flag
+	li		$s5, 26			# number of elements
+	la		$t9, minusChar
+	la 		$t6, nullChar
+	la 		$t7, spaceChar
+	lb 		$t6, 0($t6)
+	lb 		$t7, 0($t7)
+	lb 		$t9, 0($t9)
+
+	j		loopInsideBuffer				# jump to target
 	
-	li 		$t3, 0  	# index for buffer
-	la		$t5, newLine 
-	la 		$t6, spaceChar
-	li		$s0, 0		# flag for end of input string
-	li		$s1, 0		# flag for '-'
-	li		$s2, 0		# for calculations
-	li 		$s3, 10
-	li		$s4, 0		# counter for int_array position
-	li 		$t8, 0		# counter for intAsStr position
-	jal 	loopForQ2Input
-	
-
-	li		$v0, 4 		# print a string
-	la		$a0, int_array($zero)	# setting string
-	syscall
-
-
+continueQ2:
+	   
 	li 		$t4, 0
 	# TODO call outerloopforq2
 	jal		outerLoopForQ2
 	
 	j menu
 
-loopForQ2Input:
-	lb 		$t4, buffer($t3)			# load char of input
-	beq 	$t4, $t5, setStrEndFlag		# if newline end loop
-continueQ2InputLoop:
-	li 		$t9, 0					# counter for intAsString
-	beq 	$t4, $t6, calcIntVal 	# if space then calc int val
-	beq		$t4, $t5, calcIntVal	
-	sb 		$t4, intAsStr($t8)		# store char in intAsStr for calculations
-	addi 	$t3, $t3, 1
-	addi 	$t8, $t8, 1
-	j 		loopForQ2Input
+loopInsideBuffer:
+	lb      $t1, buffer($t0)
 	
+	# if space
+	beq		$t1, $t7, calculateSubString	# if t1 == $t7 (space char) then calculateSubString
 
-calcIntVal:
-	# calculate integer value and store to int array
-	# if flag = 1 => jr $ra 
-	beq		$t8, 0,	endCalcIntVal
-	lb		$t4, intAsStr($t9)
-	beq 	$t4, 34, setNegFlag  # if the char is negative (-) set flag
+
+	# if minus
+	beq		$t1, $t9, setMinusFlag	# if $t1 == $t9 ('-') then setMinusFlag
+
+	# if null or new line
+	beq		$t1, $t6, printQ2Result	# if $t0 == $t1 then target
 	
-	sub 	$t4, $t4, 48	# to get decimal value of int in str form
-	lw		$t0, 0($t8)		# counter for mult by 10
-	addi 	$t0, $t0, -1	# decrease by 1 becasue we look from the backside
-	bne		$t0, $zero,	loopMult10	# if more than 1 digit mult by 10 n amount of times
-continueCalcIntVal:
-	addi	$s2, $t4, 0		# add result to calculations register
-	addi	$t9, $t9, 1		# increment substring counter
+	
+continueLoopInsideBuffer:
+	li 		$t3, 0	# reset sub string counter for calculations
+	sb		$t1, intAsStr($t2)
+	addi	$t2, $t2, 1
+
+	addi	$t0, $t0, 1
+	j		loopInsideBuffer
+
+calculateSubString:		#123
+	beq		$t2, 0, addIntoIntArray	# if $t2 == 0 then target
+	
+	lb      $t4, intAsStr($t3)
+
+	# convert char to decimal
+	addi	$t4, $t4, -48			# $t4 => find int value of char 
+
+
+	# multiply by 10**$t3
+	addi	$t8, $t2, -1		# since t2 is 3, t8 will be 2 for 123
+	j		multiplyByTen
+
+continueCalculateSubString:
+	add		$s1, $s1, $t4		# $s1 = $s1 + $t4
+
+	addi	$t2, $t2, -1
+	addi	$t3, $t3, 1
+	j		calculateSubString
+	
+multiplyByTen:
+	beq		$t8, 0, continueCalculateSubString	# if t8 == $t1 then continueCalculateSubString
+	
+	mul		$t4, $t4, 10
+
 	addi	$t8, $t8, -1
-	j 		calcIntVal
+	j		multiplyByTen				# jump to multiplyByTen
 	
-endCalcIntVal:
-	beq		$s1, 1, makeNegative  	# if negFlag = True adjust result
-	sw		$s2, int_array($s4)		# store result in int array
-	addi 	$s4, $s4, 1				# increment int array position counter
-	beq		$s0, 1, loopEnd			# if at end go back to main func
-	j 		loopForQ2Input
+setMinusFlag:
+	li		$s2, 1
+	addi	$t0, $t0, 1
+	j		loopInsideBuffer
 
-loopMult10:
-	beq		$t0, $zero, continueCalcIntVal	# check if n is reached
-	mul 	$t4, $t4, $s3	# mult $t4 by 10
-	addi 	$t0, $t0, -1	# decrement mult counter
-	j 		loopMult10
+addIntoIntArray:
+	addi	$s5, $s5, 1
+	beq		$s2, 1, subFromZero	# if $t0 == $t1 then target
+continueAddIntoArray:
+	li 		$v0, 1
+	la 		$a0, 0($s1)
+	syscall
 
-makeNegative:
-	sub		$s2, $zero, $s2	# value = 0 - value
-	li		$s1, 0	# reset negFalg
-	j		endCalcIntVal
+	li 		$v0, 4
+	la 		$a0, deneme
+	syscall
 
-setStrEndFlag:
-	li 		$s0, 1
-	j 		continueQ2InputLoop
+	sw		$s1, int_array($s3)
+	addi 	$s3, $s3, 4
+	beq		$s4, 1, continueQ2	# if $s4 == $t1 then target
+	
+	j		continueLoopInsideBuffer				# jump to target
 
-setNegFlag:
-	li		$s1, 1
-	addi	$t9, $t9, 1
-	# j		continueCalcIntVal
-	j 		calcIntVal
+subFromZero:
+	sub		$s1, $zero, $s1
+	li		$s2, 0
+	j		continueAddIntoArray				# jump to target
+
+printQ2Result:
+	li		$s4, 1
+	j	calculateSubString
+
 
 outerLoopForQ2:
+	li		$t0, 0
+	li 		$v0, 1
+	la 		$a0, int_array($t0)
+	syscall
+
 	# make sure t4 is 0 at first !
-    beq     $t4, 26, goToMenu     # loop until end of the array
+    beq     $t4, $s5, goToMenu     # loop until end of the array
 	li		$t0, 0
 	j		loopForQ2
  
@@ -252,11 +284,13 @@ outerLoopForQ2:
 
 
 loopForQ2:
-	
 	# t0 -> address of int array 
 	# t1 -> value in that address
 	# t7 null char
 	# we assume that $t0 is already initialized in q2
+	mul		$s6, $s5, 4
+	sub		$s6, $s6, 4
+	beq     $t0, $s6, outerLoopForQ2   # loop until end of the array
 	lw      $t1, int_array($t0) # t1 = int_arr[t0]
 	addi	$t2, $t0, 4			
     lw      $t2, int_array($t2)
@@ -269,9 +303,15 @@ continueLoopForQ2:
 	j loopForQ2
 
 swap:
+	addi	$t2, $t0, 4
 	lw      $t3, int_array($t2) # temp register
 	sw      $t1, int_array($t2) # adding t1 to t2
-	sw      $t3, int_array($t1) # storing temp to t1s memory 
+	sw      $t3, int_array($t0) # storing temp to t1s memory 
+
+	# lw      $t3, int_array($t2) # temp register
+	# sw      $t1, int_array($t2) # replacing t2 with t1
+	# sw      $t3, int_array($t1) # storing temp to t1s memory 
+
 
 	j continueLoopForQ2
 
@@ -308,7 +348,6 @@ displayOutput:
 	la		$a0, ($t8)	# setting int !! assuming t8 is total counter of prime numbers!!
 	syscall
 	
-
    	j 		goToMenu
 
 outerLoopForQ3: 
@@ -358,3 +397,26 @@ loopEnd:
 
 goToMenu:
     j      menu
+
+clearRegisters:
+	li $t0, 0
+	li $t1, 0
+	li $t2, 0
+	li $t3, 0
+	li $t4, 0
+	li $t5, 0
+	li $t6, 0
+	li $t7, 0
+	li $t8, 0
+	li $t9, 0
+
+	li $s0, 0
+	li $s1, 0
+	li $s2, 0
+	li $s3, 0
+	li $s4, 0
+	li $s5, 0
+	li $s6, 0
+	li $s7, 0
+
+	jr $ra
