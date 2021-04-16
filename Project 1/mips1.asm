@@ -167,7 +167,7 @@ question2:
 	li		$s2, 0			# minus flag
 	li		$s3, 0
 	li		$s4, 0			# end flag
-	li		$s5, 26			# number of elements
+	li		$s5, 0			# number of elements
 	la		$t9, minusChar
 	la 		$t6, nullChar
 	la 		$t7, spaceChar
@@ -185,25 +185,25 @@ continueQ2:
 	
 	j menu
 
-loopInsideBuffer:
+loopInsideBuffer:  # 123 5 13
 	lb      $t1, buffer($t0)
 	
 	# if space
+	li 		$t3, 0	# reset sub string counter for calculations
 	beq		$t1, $t7, calculateSubString	# if t1 == $t7 (space char) then calculateSubString
 
-
+	li 		$s1, 0	# reset result value
 	# if minus
 	beq		$t1, $t9, setMinusFlag	# if $t1 == $t9 ('-') then setMinusFlag
 
 	# if null or new line
 	beq		$t1, $t6, printQ2Result	# if $t0 == $t1 then target
 	
-	
-continueLoopInsideBuffer:
-	li 		$t3, 0	# reset sub string counter for calculations
 	sb		$t1, intAsStr($t2)
 	addi	$t2, $t2, 1
-
+	
+continueLoopInsideBuffer:
+	
 	addi	$t0, $t0, 1
 	j		loopInsideBuffer
 
@@ -254,7 +254,13 @@ continueAddIntoArray:
 
 	sw		$s1, int_array($s3)
 	addi 	$s3, $s3, 4
-	beq		$s4, 1, continueQ2	# if $s4 == $t1 then target
+	beq		$s4, 1, continueQ2	# if $s4 == $t1 then target  # TODO asagi cekilecek
+	
+	li		$t2, 0
+	
+	j		resetIntAsStr				# jump to target
+continueAddIntoArray2:
+	li		$t2, 0
 	
 	j		continueLoopInsideBuffer				# jump to target
 
@@ -263,19 +269,19 @@ subFromZero:
 	li		$s2, 0
 	j		continueAddIntoArray				# jump to target
 
+resetIntAsStr:
+	beq		$t2, $t3, continueAddIntoArray2
+	sb		$t6, intAsStr($t2)
+	addi	$t2, $t2, 1
+	j		resetIntAsStr				# jump to resetIntAsStr
+
 printQ2Result:
 	li		$s4, 1
 	j	calculateSubString
 
-
 outerLoopForQ2:
-	li		$t0, 0
-	li 		$v0, 1
-	la 		$a0, int_array($t0)
-	syscall
-
 	# make sure t4 is 0 at first !
-    beq     $t4, $s5, goToMenu     # loop until end of the array
+    beq     $t4, 26, goToMenu     # loop until end of the array
 	li		$t0, 0
 	j		loopForQ2
  
@@ -284,13 +290,11 @@ outerLoopForQ2:
 
 
 loopForQ2:
+	
 	# t0 -> address of int array 
 	# t1 -> value in that address
 	# t7 null char
 	# we assume that $t0 is already initialized in q2
-	mul		$s6, $s5, 4
-	sub		$s6, $s6, 4
-	beq     $t0, $s6, outerLoopForQ2   # loop until end of the array
 	lw      $t1, int_array($t0) # t1 = int_arr[t0]
 	addi	$t2, $t0, 4			
     lw      $t2, int_array($t2)
@@ -303,15 +307,9 @@ continueLoopForQ2:
 	j loopForQ2
 
 swap:
-	addi	$t2, $t0, 4
 	lw      $t3, int_array($t2) # temp register
-	sw      $t1, int_array($t2) # adding t1 to t2
-	sw      $t3, int_array($t0) # storing temp to t1s memory 
-
-	# lw      $t3, int_array($t2) # temp register
-	# sw      $t1, int_array($t2) # replacing t2 with t1
-	# sw      $t3, int_array($t1) # storing temp to t1s memory 
-
+	sw      $t1, int_array($t2) # replacing t2 with t1
+	sw      $t3, int_array($t1) # storing temp to t1s memory 
 
 	j continueLoopForQ2
 
