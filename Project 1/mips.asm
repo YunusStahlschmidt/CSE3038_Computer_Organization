@@ -3,12 +3,12 @@
 	prmptQ1: 	.asciiz "Enter the String: "
 	prmptInput:	.asciiz "Input: "
 	prmptOutput:.asciiz "Output: "
-	menuText: 	.asciiz "\nWelcome to our MIPS project!\nMain Menu:\n1. Count Alphabetic Characters\n2. Sort Numbers\n3. Prime (N)\n4. Huffman Coding\n5. Exit\n"
+	welcomeText: .asciiz "\nWelcome to our MIPS project!"
+	menuText: 	.asciiz "\nMain Menu:\n1. Count Alphabetic Characters\n2. Sort Numbers\n3. Prime (N)\n4. Huffman Coding\n5. Exit\n"
 	deneme: 	.asciiz "\nhello, "
 	q3Text:		.asciiz "\nPlease enter an integer number for num_prime(N):\n"
 	q3Out1:		.asciiz "prime("
 	q3Out2:		.asciiz ") is "
-	# string: 	.space 100
 	userInput: 	.space 20
 	exitText: 	.asciiz "\nProgram ends. Bye :)\n"
 	buffer: 	.space 100
@@ -24,7 +24,11 @@
 	primeArray: .word  0:80000
 
 .text
+	li		$v0, 4 		# print a string
+	la		$a0, welcomeText	# setting string
+	syscall
 menu:
+	jal 	clearRegisters
 	li		$v0, 4 		# print a string
 	la		$a0, menuText	# setting string
 	syscall
@@ -56,7 +60,6 @@ question1:
 	lb 		$t7, 0($t7)
 	li		$t1, 97
 
-
 	jal     countCharLoop
     li      $t4, 0      # counter for PrintQ1Loop
     jal     loopPrintQ1
@@ -79,7 +82,7 @@ loopPrintQ1:
 	la 		$a0, ($t8)
 	syscall
 
-    li		$v0, 4 		# $t1 = 
+    li		$v0, 4 		
     la      $a0, tabChar
     syscall
 
@@ -169,7 +172,7 @@ question2:
 	li		$s4, 0			# end flag
 	li		$s5, 0			# number of elements
 	la		$t9, minusChar
-	la 		$t6, nullChar
+	la 		$t6, newLine
 	la 		$t7, spaceChar
 	lb 		$t6, 0($t6)
 	lb 		$t7, 0($t7)
@@ -178,43 +181,35 @@ question2:
 	j		loopInsideBuffer				# jump to target
 	
 continueQ2:
-	   
 	li 		$t4, 0
+	addi	$s6, $s5, -1
 	# TODO call outerloopforq2
 	jal		outerLoopForQ2
-	
 	j menu
 
 loopInsideBuffer:  # 123 5 13
 	lb      $t1, buffer($t0)
-	
 	# if space
 	li 		$t3, 0	# reset sub string counter for calculations
 	beq		$t1, $t7, calculateSubString	# if t1 == $t7 (space char) then calculateSubString
-
+	# if null or new line
+	beq		$t1, $t6, printQ2Result	# if $t0 == $t1 then target   3 5 2
 	li 		$s1, 0	# reset result value
 	# if minus
 	beq		$t1, $t9, setMinusFlag	# if $t1 == $t9 ('-') then setMinusFlag
-
-	# if null or new line
-	beq		$t1, $t6, printQ2Result	# if $t0 == $t1 then target
-	
 	sb		$t1, intAsStr($t2)
 	addi	$t2, $t2, 1
 	
 continueLoopInsideBuffer:
-	
 	addi	$t0, $t0, 1
 	j		loopInsideBuffer
 
 calculateSubString:		#123
 	beq		$t2, 0, addIntoIntArray	# if $t2 == 0 then target
-	
 	lb      $t4, intAsStr($t3)
 
 	# convert char to decimal
 	addi	$t4, $t4, -48			# $t4 => find int value of char 
-
 
 	# multiply by 10**$t3
 	addi	$t8, $t2, -1		# since t2 is 3, t8 will be 2 for 123
@@ -222,18 +217,15 @@ calculateSubString:		#123
 
 continueCalculateSubString:
 	add		$s1, $s1, $t4		# $s1 = $s1 + $t4
-
 	addi	$t2, $t2, -1
 	addi	$t3, $t3, 1
 	j		calculateSubString
 	
 multiplyByTen:
 	beq		$t8, 0, continueCalculateSubString	# if t8 == $t1 then continueCalculateSubString
-	
 	mul		$t4, $t4, 10
-
 	addi	$t8, $t8, -1
-	j		multiplyByTen				# jump to multiplyByTen
+	j		multiplyByTen		# jump to multiplyByTen
 	
 setMinusFlag:
 	li		$s2, 1
@@ -244,20 +236,10 @@ addIntoIntArray:
 	addi	$s5, $s5, 1
 	beq		$s2, 1, subFromZero	# if $t0 == $t1 then target
 continueAddIntoArray:
-	li 		$v0, 1
-	la 		$a0, 0($s1)
-	syscall
-
-	li 		$v0, 4
-	la 		$a0, deneme
-	syscall
-
 	sw		$s1, int_array($s3)
 	addi 	$s3, $s3, 4
 	beq		$s4, 1, continueQ2	# if $s4 == $t1 then target  # TODO asagi cekilecek
-	
 	li		$t2, 0
-	
 	j		resetIntAsStr				# jump to target
 continueAddIntoArray2:
 	li		$t2, 0
@@ -281,37 +263,70 @@ printQ2Result:
 
 outerLoopForQ2:
 	# make sure t4 is 0 at first !
-    beq     $t4, 26, goToMenu     # loop until end of the array
+    beq     $t4, $s5, printSortedArray     # loop until end of the array
 	li		$t0, 0
+	li		$t2, 0
+	li		$t5, 0
 	j		loopForQ2
+continueOuterLoopForQ2:
  
     addi    $t4, $t4, 1  # increments the index
     j 		outerLoopForQ2
 
 
 loopForQ2:
-	
-	# t0 -> address of int array 
-	# t1 -> value in that address
+	# t5 -> 0 at the begining 
+	# s5 -> length of array
 	# t7 null char
 	# we assume that $t0 is already initialized in q2
+	
+	beq		$t5, $s6, continueOuterLoopForQ2	# if $t0 == $t1 then target # arr + index
+
 	lw      $t1, int_array($t0) # t1 = int_arr[t0]
 	addi	$t2, $t0, 4			
-    lw      $t2, int_array($t2)
-	beq		$t2, $t7, loopEnd 	# if $t0 == $t1 then target
+    lw      $t7, int_array($t2)
+	# beq		$t2, $t7, loopEnd 	# if $t0 == $t1 then target
 	# arr[t1] > arr[t2] => swap 
-	bgt		$t1, $t2, swap
+	# [...t1,t2....]
+	bgt		$t1, $t7, swap
 
 continueLoopForQ2:
 	addi	$t0, $t0, 4
+	addi	$t5, $t5, 1
 	j loopForQ2
 
 swap:
+	# address of integer array -> 
+	# index of element ->
+
 	lw      $t3, int_array($t2) # temp register
 	sw      $t1, int_array($t2) # replacing t2 with t1
-	sw      $t3, int_array($t1) # storing temp to t1s memory 
+	sw      $t3, int_array($t0) # storing temp to t1s memory 
 
 	j continueLoopForQ2
+
+printSortedArray:
+	li		$t0, 0
+	li		$t1, 0
+	li      $t3, 0
+
+printSortedArrayContinue:
+	beq		$t0, $s5, menu	# if $t0 == $t1 then target
+	mul		$t1, $t0, 4
+	
+	lw 		$t3, int_array($t1)
+
+	li		$v0, 1 		# print a int
+	la		$a0, ($t3)	# setting int !! assuming t8 is total counter of prime numbers!!
+	syscall
+
+	li		$v0, 4 		# $t1 = 
+    la      $a0, spaceChar
+    syscall
+	
+
+	addi	$t0, $t0, 1
+	j printSortedArrayContinue
 
 question3:
 	# Q3 Display question  
@@ -417,4 +432,32 @@ clearRegisters:
 	li $s6, 0
 	li $s7, 0
 
-	jr $ra
+clearData:
+	beq		$t0, 320000, clearBuffer	# if $t0 == $t1 then target
+	sw		$zero, primeArray($t0)
+
+	addi	$t0, $t0, 4
+	j		clearData
+
+clearBuffer:
+	li 		$t0, 0
+	j		clearIntArray				# jump to target
+
+clearIntArray:
+	beq		$t0, 104, clearBuffer2	# if $t0 == $t1 then target
+	sw		$zero, int_array($t0)
+	
+	addi	$t0, $t0, 4
+	j 		clearIntArray	
+
+clearBuffer2:
+	li 		$t0, 0
+	j		continueClearRegisters				# jump to target
+
+continueClearRegisters:
+	beq		$t0, 100, loopEnd	# if $t0 == $t1 then target
+	sb		$zero, buffer($t0)
+	sb		$zero, bufferSmaller($t0)
+	
+	addi	$t0, $t0, 1
+	j		continueClearRegisters
