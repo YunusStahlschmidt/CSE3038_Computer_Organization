@@ -4,11 +4,11 @@
 	prmptInput:	.asciiz "Input: "
 	prmptOutput:.asciiz "Output: "
 	welcomeText: .asciiz "\nWelcome to our MIPS project!"
-	menuText: 	.asciiz "\nMain Menu:\n1. Count Alphabetic Characters\n2. Sort Numbers\n3. Prime (N)\n4. Huffman Coding\n5. Exit\n"
-	deneme: 	.asciiz "\nhello, "
+	menuText: 	.asciiz "\nMain Menu:\n1. Count Alphabetic Characters\n2. Sort Numbers\n3. Prime (N)\n4. Huffman Coding\n5. Exit\nPlease select an option: "
 	q3Text:		.asciiz "\nPlease enter an integer number for num_prime(N):\n"
 	q3Out1:		.asciiz "prime("
 	q3Out2:		.asciiz ") is "
+	q4Notify:	.asciiz "Unimplemented!\n"
 	userInput: 	.space 20
 	exitText: 	.asciiz "\nProgram ends. Bye :)\n"
 	buffer: 	.space 100
@@ -391,7 +391,10 @@ addPrime:
 	j		returnOuterLoop
 
 question4:
-   	j 		exit
+   	li		$v0, 4				
+	la		$a0, q4Notify		 
+	syscall
+	j 		menu
 
 goodbye:
 	li		$v0, 4				# $v0 = 4
