@@ -58,39 +58,39 @@ question1:
 	la 		$t0, bufferSmaller
 	la 		$t7, nullChar
 	lb 		$t7, 0($t7)
-	li		$t1, 97
+	li		$t1, 97		# ascii value for 'a'
 
 	jal     countCharLoop
     li      $t4, 0      # counter for PrintQ1Loop
     jal     loopPrintQ1
 	
 loopPrintQ1:
-    beq     $t4, 26, goToMenu     # loop until end of alphabet
+    beq     $t4, 26, goToMenu   	# loop until end of alphabet
     li      $t0, 0
-	li      $t3, 0               # int max = 0
-    li      $t8, 0              # decimal number of char
-    jal     findMaxChar
+	li      $t3, 0              	# int max = 0
+    li      $t8, 0            		# decimal number of char
+    jal     findMaxChar				
 
-    sll     $t6, $t8, 2     
-    sw      $zero, int_array($t6)
+    sll     $t6, $t8, 2     		# multiply by 4
+    sw      $zero, int_array($t6)	# store zero in the memory address
 
-    addi     $t8, $t8, 97
+    addi     $t8, $t8, 97			# get char value according to position in int_array + 'a'
 
-	beq		$t3, 0, goToMenu
+	beq		$t3, 0, goToMenu		
     
-    li 		$v0, 11
+    li 		$v0, 11					# print the character
 	la 		$a0, ($t8)
 	syscall
 
-    li		$v0, 4 		
+    li		$v0, 4 					# print tabChar string 
     la      $a0, tabChar
     syscall
 
-    li 		$v0, 1
+    li 		$v0, 1					# print the occurence integer value
 	la 		$a0, ($t3)
 	syscall
 
-    li 		$v0, 4
+    li 		$v0, 4					
 	la 		$a0, newLine
 	syscall
 
@@ -102,7 +102,7 @@ findMaxChar:
 
 	lw      $t2, int_array($t0)  # puts the array value at index $t0 to $t2
 
-    bgt		$t2, $t3, updateValue	# if $t0 > $t1 then target
+    bgt		$t2, $t3, updateValue	# if $t2 > $t3 then target
 
 returnFindMaxChar:	
 	addi    $t0, $t0, 4  # increments the index
@@ -127,29 +127,30 @@ countCharLoop:
 	addi 	$t0, $t0, 1
 	j 		countCharLoop
 
-convert:
-	la		$t0, buffer
-	la 		$t1, spaceChar
-	lb		$t1, 0($t1)
-	la 		$t7, newLine
-	lb 		$t7, 0($t7)
+convert:	
+	# converts upper case to lower case. Since we already learned from practice session we implemented same algorithm  
+	la		$t0, buffer			# loading address of buffer
+	la 		$t1, spaceChar		# t1 = spacechar address 
+	lb		$t1, 0($t1)			# get value of space
+	la 		$t7, newLine		# get address of newline
+	lb 		$t7, 0($t7)			# load value into register
 
-	li 		$v0, 8
+	li 		$v0, 8				#taking input from user
 	la		$a0, buffer
 	li		$a1, 100
 	syscall
 
-	la 		$t3, bufferSmaller
+	la 		$t3, bufferSmaller	#load address of bufferSmaller to store lower case char into it
 	add 	$t4, $0, $0
 	li 		$s0, 90
 
 convertLoop:
 	lb		$t2, 0($t0)
-	beq		$t2, $t7, loopEnd 	# if $t0 == $t1 then target
-	add		$t0, $t0, 1	
-	ori 	$t4, $t2, 0x20
-	sb 		$t4, 0($t3)
-	add 	$t3, $t3, 1  #tbd how is this working
+	beq		$t2, $t7, loopEnd 	# if its end of loop
+	add		$t0, $t0, 1			# increment 1
+	ori 	$t4, $t2, 0x20		# bitwise or operation to make lower case
+	sb 		$t4, 0($t3)			# store into memory=bufferSmaller
+	add 	$t3, $t3, 1  		# increments address at the memory for next iteration
 	j 		convertLoop
 
 
@@ -164,11 +165,11 @@ question2:
 	li		$a1, 100
 	syscall
 
-	li		$t0, 0
+	li		$t0, 0			# counter for buffer position
 	li		$t2, 0			# sub string counter
 	li		$s1, 0			# result register
 	li		$s2, 0			# minus flag
-	li		$s3, 0
+	li		$s3, 0			# counter for int_array position
 	li		$s4, 0			# end flag
 	li		$s5, 0			# number of elements
 	la		$t9, minusChar
@@ -247,7 +248,7 @@ continueAddIntoArray2:
 	j		continueLoopInsideBuffer				# jump to target
 
 subFromZero:
-	sub		$s1, $zero, $s1
+	sub		$s1, $zero, $s1						# taking negative of the number
 	li		$s2, 0
 	j		continueAddIntoArray				# jump to target
 
@@ -296,8 +297,7 @@ continueLoopForQ2:
 	j loopForQ2
 
 swap:
-	# address of integer array -> 
-	# index of element ->
+	# to swap the elemnts in array we need a temp register to store the value temprorarirly
 
 	lw      $t3, int_array($t2) # temp register
 	sw      $t1, int_array($t2) # replacing t2 with t1
@@ -311,7 +311,7 @@ printSortedArray:
 	li      $t3, 0
 
 printSortedArrayContinue:
-	beq		$t0, $s5, menu	# if $t0 == $t1 then target
+	beq		$t0, $s5, menu	# if at end of array go back to menu
 	mul		$t1, $t0, 4
 	
 	lw 		$t3, int_array($t1)
@@ -320,7 +320,7 @@ printSortedArrayContinue:
 	la		$a0, ($t3)	# setting int !! assuming t8 is total counter of prime numbers!!
 	syscall
 
-	li		$v0, 4 		# $t1 = 
+	li		$v0, 4 		
     la      $a0, spaceChar
     syscall
 	
@@ -392,13 +392,13 @@ addPrime:
 
 question4:
    	li		$v0, 4				
-	la		$a0, q4Notify		 
+	la		$a0, q4Notify		# notify user abount missing implementation 
 	syscall
 	j 		menu
 
 goodbye:
-	li		$v0, 4				# $v0 = 4
-	la		$a0, exitText		# 
+	li		$v0, 4				
+	la		$a0, exitText		 
 	syscall
 	j		exit				# jump to exit
 	
@@ -412,9 +412,9 @@ loopEnd:
 
 
 goToMenu:
-    j      menu
+    j      menu		# go back to menu
 
-clearRegisters:
+clearRegisters: 	# clean all registers for next menu item
 	li $t0, 0
 	li $t1, 0
 	li $t2, 0
@@ -435,8 +435,8 @@ clearRegisters:
 	li $s6, 0
 	li $s7, 0
 
-clearData:
-	beq		$t0, 320000, clearBuffer	# if $t0 == $t1 then target
+clearData:		# clean buffers and arrays so they can be used for next menu item
+	beq		$t0, 320000, clearBuffer
 	sw		$zero, primeArray($t0)
 
 	addi	$t0, $t0, 4
@@ -444,10 +444,10 @@ clearData:
 
 clearBuffer:
 	li 		$t0, 0
-	j		clearIntArray				# jump to target
+	j		clearIntArray				# jump to top of loop
 
 clearIntArray:
-	beq		$t0, 104, clearBuffer2	# if $t0 == $t1 then target
+	beq		$t0, 104, clearBuffer2	
 	sw		$zero, int_array($t0)
 	
 	addi	$t0, $t0, 4
@@ -455,10 +455,10 @@ clearIntArray:
 
 clearBuffer2:
 	li 		$t0, 0
-	j		continueClearRegisters				# jump to target
+	j		continueClearRegisters		# jump to top of loop
 
-continueClearRegisters:
-	beq		$t0, 100, loopEnd	# if $t0 == $t1 then target
+continueClearRegisters:		
+	beq		$t0, 100, loopEnd	
 	sb		$zero, buffer($t0)
 	sb		$zero, bufferSmaller($t0)
 	
