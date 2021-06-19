@@ -88,7 +88,7 @@ assign dpack={datmem[sum[5:0]],datmem[sum[5:0]+1],datmem[sum[5:0]+2],datmem[sum[
 //multiplexers
 //mux with RegDst control
 // mult2_to_1_5  mult1(out1, instruc[20:16],instruc[15:11],regdest1,regdest2);  // TODO: change to 4 to 1
-mult4_to_1_5 mult1(out1,instruc[20:16],instruc[15:11],x,registerfile[31],regdest1,regdest2);
+mult4_to_1_5 mult1(out1,instruc[20:16],instruc[15:11],registerfile[31],regdest1,regdest2);
 
 //mux with ALUSrc control
 mult2_to_1_32 mult2(out2, datab,extad,alusrc);
@@ -97,7 +97,7 @@ mult2_to_1_32 mult2(out2, datab,extad,alusrc);
 mult2_to_1_32 mult3(out3, sum, dpack, memtoreg);
 
 //mux with Branch&Jump control
-mult4_to_1_32 mult4(out4, adder1out,out5,out3,adder2out,outmux1,outmux0);
+// mult4_to_1_32 mult4(out4, adder1out,out5,out3,adder2out,outmux1,outmux0);
 
 //mux for jbrn
 mult2_to_1_32 mult5(out5, jmpAdrr, dataa, jbrnmux);  

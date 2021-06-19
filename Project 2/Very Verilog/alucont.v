@@ -4,8 +4,8 @@ output [2:0] gout;
 reg [2:0] gout;
 always @(aluop1 or aluop0 or f5 or f4 or f3 or f2 or f1 or f0)
 begin
-if(~(aluop1|aluop0))  gout=3'b010; //(add - 00) => sw - lw - jm
-if(aluop0&~(aluop1)gout=3'b110; //(sub - 01) => bez - bgez
+if(~(aluop1|aluop0))gout=3'b010; //(add - 00) => sw - lw - jm
+if(aluop0&~(aluop1))gout=3'b110; //(sub - 01) => bez - bgez
 if(aluop0&aluop1)gout=3'b000; //(andi - 11) => andi
 if(aluop1&~(aluop0)) //R-type (10)
 begin
